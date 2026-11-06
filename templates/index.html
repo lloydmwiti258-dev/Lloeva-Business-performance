@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="format-detection" content="telephone=no">
   <title>Lloeva Beauty | Business report</title>
   <style>
     :root {
@@ -273,6 +274,119 @@
     svg text.strong { fill: var(--text); font-weight: 600; }
     svg .hit { fill: transparent; }
     svg .hit:hover { fill: var(--accent); fill-opacity: 0.06; }
+    .more, .tbar .tools { display: none; }
+
+    /* Touch screens: no hover, so tiles open on tap and tab tips stay out of the way */
+    @media (hover: none) {
+      .tabtip { display: none; }
+      .tile:focus { z-index: 5; outline: none; }
+      .tile:focus .tiletip { visibility: visible; opacity: 1; transform: translateY(0); }
+      .tile .top { padding-right: 20px; }
+      .tile::after {
+        content: "i"; position: absolute; top: 10px; right: 10px; width: 18px; height: 18px;
+        display: grid; place-items: center; border-radius: 50%; font: italic 600 12px var(--serif);
+        color: var(--deep); background: var(--blush);
+      }
+      .tile.feature::after { color: #fff; background: rgba(255, 255, 255, 0.22); }
+    }
+
+    /* Phones */
+    @media (max-width: 620px) {
+      html { -webkit-text-size-adjust: 100%; }
+      .hero-in { padding: 18px 14px 66px; gap: 12px; }
+      .brand { gap: 12px; }
+      .mono { width: 44px; height: 44px; font-size: 17px; }
+      h1 { font-size: 25px; }
+      .tagline { font-size: 11px; letter-spacing: 0.1em; }
+      .hero-side { width: 100%; gap: 8px; }
+      .hero-side > span { flex-basis: 100%; }
+      .hero-side .refresh, .hero-side form { flex: 1; }
+      .refresh { min-height: 44px; padding: 11px 12px; text-align: center; }
+      .hero-side form { display: flex; margin: 0; }
+      .signout { width: 100%; border: 0; }
+
+      .wrap { padding: 0 12px 28px; }
+      h2 { font-size: 18px; }
+      .sub { font-size: 14px; line-height: 1.4; }
+      .card { padding: 16px; }
+      .grid { gap: 12px; }
+      [role="tabpanel"] { scroll-margin-top: 76px; }
+
+      .filter { padding: 10px; gap: 10px; }
+      .segments { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
+      .segments a { padding: 11px 2px; text-align: center; }
+      .filter form { width: 100%; }
+      .filter form select { flex: 1; min-width: 0; }
+      .filter form input[type="date"] { flex: 1 1 calc(100% - 52px); min-width: 0; }
+      .filter form label { min-width: 40px; font-size: 14px; }
+      .apply { width: 100%; }
+      select, input[type="date"], .apply { min-height: 44px; font-size: 16px; }
+      .showing { width: 100%; font-size: 14px; }
+
+      .tabs {
+        position: sticky; top: 0; z-index: 8; display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: 6px; margin: 0 -12px 8px; padding: 8px 12px; background: var(--page);
+      }
+      .tabs button { width: 100%; height: 100%; min-height: 48px; padding: 6px 4px; font-size: 13px; line-height: 1.2; }
+      .tabs button::before { display: none; }
+
+      .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .tile { padding: 12px; }
+      .tile.feature { grid-column: 1 / -1; }
+      .tile .ico { width: 26px; height: 26px; }
+      .tile .top { gap: 7px; }
+      .tile .value { font-size: 22px; white-space: normal; }
+      .tile.feature .value { font-size: 30px; }
+      .tile .note { font-size: 12.5px; }
+      .legend { font-size: 13px; gap: 8px 14px; }
+      summary { min-height: 44px; padding: 11px 0; font-size: 14px; }
+
+      /* Each table row becomes a small card */
+      .scroll { max-height: none; overflow: visible; }
+      table, tbody { display: block; width: 100%; }
+      thead { display: none; }
+      tbody tr {
+        display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px;
+        padding: 12px 0; border-bottom: 1px solid var(--line);
+      }
+      tbody tr.later { display: none; }
+      tbody tr:hover td { background: none; }
+      td, td.n { display: block; padding: 0; border: 0; font-size: 15px; text-align: left; white-space: normal; overflow-wrap: break-word; }
+      td::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 400; color: var(--text-2); }
+      td:first-child, td[colspan] { grid-column: 1 / -1; font-weight: 600; color: var(--deep); }
+      td:first-child::before { display: none; }
+
+      .tbar { margin-bottom: 4px; }
+      .tbar input { flex-basis: 100%; min-height: 44px; font-size: 16px; }
+      .tbar .count { font-size: 13px; }
+      .tbar button { flex: 1 1 auto; min-height: 44px; font-size: 13px; }
+      .tbar .tools { display: block; }
+      .tbar .clear { flex: 0 1 auto; }
+
+      /* Sort and filter panel */
+      table.tools-open thead {
+        display: block; margin: 8px 0 4px; padding: 12px; background: var(--blush); border-radius: 12px;
+      }
+      thead tr { display: flex; flex-wrap: wrap; gap: 6px; }
+      thead tr::before { flex-basis: 100%; font-size: 13px; font-weight: 600; color: var(--deep); }
+      thead tr:first-child::before { content: "Sort by"; }
+      thead th, tr.filters th { position: static; display: block; padding: 0; background: none; border-radius: 0; text-align: left; }
+      th .sort {
+        min-height: 44px; box-sizing: border-box; padding: 11px 12px; font-size: 13px; line-height: 1.5;
+        background: var(--surface); border: 1px solid var(--axis); border-radius: 999px;
+      }
+      tr.filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+      tr.filters::before { content: "Filter by"; grid-column: 1 / -1; }
+      tr.filters th::before { content: attr(data-label); display: block; margin-bottom: 2px; font-size: 12px; color: var(--text-2); }
+      tr.filters th.n input { text-align: left; }
+      tr.filters input { min-height: 44px; box-sizing: border-box; padding: 8px 10px; font-size: 16px; border-radius: 10px; }
+
+      .more {
+        display: block; width: 100%; min-height: 44px; margin-top: 10px; cursor: pointer;
+        font: inherit; font-size: 14px; font-weight: 600; color: var(--deep);
+        background: var(--blush); border: 1px solid var(--axis); border-radius: 999px;
+      }
+    }
   </style>
 </head>
 <body data-section="{{ tab }}" data-period="{{ r.period }}">
@@ -647,15 +761,21 @@
   }
 
   function hover(node, words) {
-    node.addEventListener('mousemove', e => {
+    const show = (e, above) => {
       tip.textContent = words;
       tip.style.display = 'block';
-      const x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+      const x = Math.max(8, Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8));
       tip.style.left = `${x}px`;
-      tip.style.top = `${e.clientY + 14}px`;
-    });
+      tip.style.top = `${above ? Math.max(8, e.clientY - tip.offsetHeight - 16) : e.clientY + 14}px`;
+    };
+    node.addEventListener('mousemove', e => show(e, false));
     node.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    // A tap shows the details above the finger
+    node.addEventListener('click', e => { e.stopPropagation(); show(e, true); });
   }
+  const hideTip = () => { tip.style.display = 'none'; };
+  document.addEventListener('click', hideTip);
+  window.addEventListener('scroll', hideTip, { passive: true });
 
   // Rounded at the data end, square at the baseline.
   function column(x, y, w, base) {
@@ -700,7 +820,7 @@
       const average = group.reduce((s, r) => s + r.revenue, 0) / group.length;
       const x1 = left + start * band + 1, x2 = left + (start + group.length) * band - 1;
       svg.appendChild(make('line', { x1, x2, y1: y(average), y2: y(average), stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-linecap': 'round', 'pointer-events': 'none' }));
-      if (x2 - x1 > 62) svg.appendChild(make('text', { class: 'strong', x: (x1 + x2) / 2, y: 16, 'text-anchor': 'middle' }, `KSh ${money(average)}`));
+      if (width >= 460 && x2 - x1 > 62) svg.appendChild(make('text', { class: 'strong', x: (x1 + x2) / 2, y: 16, 'text-anchor': 'middle' }, `KSh ${money(average)}`));
       if (!everyDay && x2 - x1 > 40) svg.appendChild(make('text', { x: x1 + 1, y: base + 20 }, group[0].label));
     });
   }
@@ -772,15 +892,18 @@
     const rows = DATA.services;
     const box = document.getElementById('chart-services');
     if (!rows.length) { box.textContent = 'No services in this period.'; return; }
-    const rowH = 30, height = rows.length * rowH + 4;
+    const stacked = box.clientWidth < 460;  // long names sit above the bar on phones
+    const rowH = stacked ? 48 : 30, height = rows.length * rowH + 4;
     const { svg, width } = canvas('chart-services', height);
     svg.setAttribute('aria-label', 'Revenue by service');
-    const left = Math.min(190, width * 0.38), room = width < 560 ? 70 : 170;
+    const left = stacked ? 0 : Math.min(190, width * 0.38), room = width < 560 ? 70 : 170;
     const maxV = Math.max(...rows.map(r => r.revenue), 1);
     const scale = (width - left - room) / maxV;
     rows.forEach((r, i) => {
-      const yy = i * rowH + 3, w = Math.max(r.revenue * scale, 2);
-      svg.appendChild(make('text', { class: 'strong', x: left - 10, y: yy + 16, 'text-anchor': 'end' }, r.name));
+      const top = i * rowH + 3, yy = stacked ? top + 18 : top, w = Math.max(r.revenue * scale, 2);
+      svg.appendChild(stacked
+        ? make('text', { class: 'strong', x: 0, y: top + 12 }, r.name)
+        : make('text', { class: 'strong', x: left - 10, y: yy + 16, 'text-anchor': 'end' }, r.name));
       svg.appendChild(make('path', { d: bar(left, yy, w, 22), fill: !r.other && i < 5 ? 'var(--accent)' : 'var(--muted)' }));
       const perJob = !r.other && r.jobs > 0 && width >= 560 ? `  ·  ${money(r.revenue / r.jobs)} per job` : '';
       svg.appendChild(make('text', { x: left + w + 8, y: yy + 16 }, `${money(r.revenue)}${perJob}`));
@@ -821,7 +944,34 @@
     clear.className = 'clear';
     clear.textContent = 'Clear filters';
     clear.hidden = true;
-    bar.append(search, count, clear, button('Excel', 'xlsx'), button('PDF', 'pdf'));
+    const tools = document.createElement('button');
+    tools.type = 'button';
+    tools.className = 'tools';
+    tools.textContent = 'Sort and filter';
+    tools.setAttribute('aria-expanded', 'false');
+    tools.addEventListener('click', () => {
+      const open = table.classList.toggle('tools-open');
+      tools.setAttribute('aria-expanded', open);
+      tools.textContent = open ? 'Close' : 'Sort and filter';
+    });
+    bar.append(search, count, clear, tools, button('Excel', 'xlsx'), button('PDF', 'pdf'));
+
+    // Phones show long tables a few rows at a time. Exports still use every match.
+    const PAGE_ROWS = 10;
+    let limit = PAGE_ROWS;
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'more';
+    more.addEventListener('click', () => { limit += PAGE_ROWS; paginate(); });
+
+    function paginate() {
+      const shown = visible();
+      rows.forEach(row => row.classList.remove('later'));
+      shown.slice(limit).forEach(row => row.classList.add('later'));
+      const left = shown.length - limit;
+      more.hidden = left <= 0;
+      more.textContent = `Show ${Math.min(PAGE_ROWS, left)} more (${left} left)`;
+    }
 
     const none = document.createElement('tr');
     const noneCell = document.createElement('td');
@@ -892,6 +1042,8 @@
       none.hidden = shown > 0;
       count.textContent = `${shown} of ${rows.length}`;
       clear.hidden = !words.length && !rules.some(Boolean);
+      limit = PAGE_ROWS;
+      paginate();
     }
 
     clear.addEventListener('click', () => {
@@ -929,6 +1081,7 @@
         ? [...original].sort((a, b) => compare(a, b, index) * (direction === 'ascending' ? 1 : -1))
         : original;
       body.append(...order, none);
+      paginate();
     }
 
     heads.forEach((head, index) => {
@@ -941,6 +1094,9 @@
       sort.addEventListener('click', () => sortBy(index));
       head.textContent = '';
       head.append(sort);
+      // Labels for the phone layout, where the heading row is hidden
+      rows.forEach(row => { row.cells[index].dataset.label = label; });
+      filters[index].parentElement.dataset.label = label;
     });
 
     async function exportTable(kind, node, label) {
@@ -986,6 +1142,7 @@
         scroll.append(table);
       }
     }
+    (table.closest('.scroll') || table).after(more);
     search.addEventListener('input', refresh);
     refresh();
   }
@@ -1024,7 +1181,12 @@
     drawActive();
   }
 
-  buttons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  const tabBar = document.querySelector('.tabs');
+  buttons.forEach(b => b.addEventListener('click', () => {
+    const stuck = tabBar.getBoundingClientRect().top <= 1;
+    showTab(b.dataset.tab);
+    if (stuck) document.getElementById(`panel-${b.dataset.tab}`).scrollIntoView();
+  }));
   drawActive();
   let timer;
   window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(drawActive, 120); });
