@@ -1,0 +1,39 @@
+# Secrets: never commit these
+.env
+.env.*
+!.env.example
+*service-account*.json
+*service_account*.json
+*credentials*.json
+*.pem
+*.key
+
+# Business data exported from the dashboard
+Lloeva Beauty - *.xlsx
+Lloeva Beauty - *.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Editors and local tools
+.vscode/
+.idea/
+.claude/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini

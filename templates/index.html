@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lloeva Beauty | Business report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #fff5f8;
+      --surface: #ffffff;
+      --blush: #fff0f5;
+      --text: #3b1426;
+      --text-2: #7a5566;
+      --line: #fae3eb;
+      --axis: #eec3d2;
+      --muted: #f2b6ca;
+      --accent: #d6336c;
+      --deep: #8f1a45;
+      --s2: #7b3fa0;
+      --s3: #e8a317;
+      --warn-bg: #fdf1dc;
+      --serif: "Playfair Display", Georgia, "Times New Roman", serif;
+    }
+    /* One colour family per tab: Stocks plum, Sales rose, Commission and margin teal */
+    body[data-section="stocks"] {
+      --page: #f9f4fc; --page-top: #f1e7f8; --blush: #f4ecf9; --hover: #fbf8fd;
+      --text: #2e1a3d; --text-2: #6c5a7a;
+      --line: #eee3f5; --axis: #d9c6e6; --muted: #d5bfe3;
+      --accent: #7b3fa0; --accent-2: #5f2d80; --deep: #4f2370;
+      --s2: #d6336c; --s3: #e8a317; --glow: 123, 63, 160;
+    }
+    body[data-section="sales"] {
+      --page: #fff5f8; --page-top: #ffeef4; --blush: #fff0f5; --hover: #fff8fa;
+      --text: #3b1426; --text-2: #7a5566;
+      --line: #fae3eb; --axis: #eec3d2; --muted: #f2b6ca;
+      --accent: #d6336c; --accent-2: #c2255c; --deep: #8f1a45;
+      --s2: #7b3fa0; --s3: #e8a317; --glow: 214, 51, 108;
+    }
+    body[data-section="margin"] {
+      --page: #effaf8; --page-top: #dff4f0; --blush: #e6f6f3; --hover: #f4fbfa;
+      --text: #12312e; --text-2: #4f6b68;
+      --line: #d9f0ec; --axis: #b4e0d8; --muted: #8fd3c7;
+      --accent: #008573; --accent-2: #006e60; --deep: #075e56;
+      --s2: #7b3fa0; --s3: #e8a317; --glow: 0, 133, 115;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      --shadow: 0 1px 2px rgba(59, 20, 38, 0.05), 0 10px 28px rgba(var(--glow), 0.1);
+      accent-color: var(--accent);
+      background: linear-gradient(180deg, var(--page-top) 0, var(--page) 420px);
+      color: var(--text);
+      font: 15px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+
+    /* Banner */
+    .hero {
+      position: relative; overflow: hidden; color: #fff;
+      background: linear-gradient(115deg, #8f1a45 0%, #c2255c 58%, #d6336c 100%);
+    }
+    .hero::before, .hero::after {
+      content: ""; position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.07);
+    }
+    .hero::before { width: 340px; height: 340px; right: -70px; top: -170px; }
+    .hero::after { width: 200px; height: 200px; right: 250px; bottom: -130px; }
+    .hero-in {
+      position: relative; z-index: 1; max-width: 1160px; margin: 0 auto; padding: 30px 20px 82px;
+      display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center;
+    }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .mono {
+      display: grid; place-items: center; width: 58px; height: 58px; flex: none; border-radius: 50%;
+      font: 600 21px var(--serif); letter-spacing: 0.02em;
+      background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    h1 { margin: 0; font: 600 34px/1.15 var(--serif); letter-spacing: 0.01em; }
+    .tagline { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: #ffe3ec; margin-top: 3px; }
+    .hero-side { font-size: 13px; color: #ffe3ec; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .refresh {
+      display: inline-block; padding: 8px 16px; border-radius: 999px; background: #fff;
+      color: var(--deep); font-weight: 600; text-decoration: none; font-size: 13px;
+      box-shadow: 0 4px 12px rgba(59, 20, 38, 0.2);
+    }
+    .refresh:hover { background: var(--blush); }
+
+    .wrap { position: relative; z-index: 2; max-width: 1160px; margin: -52px auto 0; padding: 0 20px 40px; }
+    h2 { margin: 0; font: 600 19px/1.3 var(--serif); color: var(--text); }
+    h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--deep); }
+    .sub { color: var(--text-2); font-size: 13px; }
+    .warning { background: var(--warn-bg); padding: 10px 14px; border-radius: 12px; margin-bottom: 14px; }
+
+    /* Date filter */
+    .filter {
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      background: var(--surface); border-radius: 18px; box-shadow: var(--shadow);
+      padding: 12px 16px; margin-bottom: 14px;
+    }
+    .segments { display: inline-flex; flex-wrap: wrap; gap: 2px; background: var(--blush); border-radius: 999px; padding: 4px; }
+    .segments a {
+      padding: 6px 16px; border-radius: 999px; color: var(--text-2);
+      text-decoration: none; font-size: 13px; font-weight: 600;
+    }
+    .segments a:hover { color: var(--deep); }
+    .segments a[aria-current="true"] {
+      background: linear-gradient(115deg, var(--accent-2), var(--accent)); color: #fff;
+      box-shadow: 0 3px 10px rgba(var(--glow), 0.35);
+    }
+    .filter form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0; }
+    .filter label { font-size: 13px; color: var(--text-2); }
+    select, input[type="date"], .apply {
+      font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
+      border: 1px solid var(--axis); border-radius: 999px; padding: 6px 12px;
+    }
+    .apply { cursor: pointer; font-weight: 600; padding: 6px 18px; color: #fff; border: 0; background: var(--accent); }
+    .apply:hover { background: var(--accent-2); }
+    .showing { margin-left: auto; color: var(--text-2); font-size: 13px; }
+
+    /* Tiles and cards */
+    .tiles { grid-column: span 12; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+    .tile, .card { background: var(--surface); border-radius: 18px; box-shadow: var(--shadow); }
+    .tile { padding: 16px 18px; position: relative; cursor: help; }
+    .tile:hover, .tile:focus-visible { z-index: 5; }
+    .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .tiletip {
+      position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 9px);
+      background: var(--deep); color: #fff; font-size: 12.5px; font-weight: 400; line-height: 1.4;
+      padding: 9px 12px; border-radius: 10px; box-shadow: 0 8px 22px rgba(59, 20, 38, 0.25);
+      visibility: hidden; opacity: 0; transform: translateY(-3px); pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+    }
+    .tiletip::before {
+      content: ""; position: absolute; left: 24px; top: -5px; width: 10px; height: 10px;
+      background: var(--deep); transform: rotate(45deg);
+    }
+    .tile:hover .tiletip, .tile:focus-visible .tiletip {
+      visibility: visible; opacity: 1; transform: translateY(0);
+    }
+    .tile .top { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; }
+    .ico {
+      display: grid; place-items: center; width: 30px; height: 30px; flex: none;
+      border-radius: 50%; background: var(--blush); color: var(--accent);
+    }
+    .ico svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tile .name { color: var(--text-2); font-size: 13px; font-weight: 600; }
+    .tile:not(.feature) .value { color: var(--deep); }
+    .tile .value { font-size: 27px; font-weight: 600; line-height: 1.25; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .tile .note { color: var(--text-2); font-size: 12px; margin-top: 2px; }
+    .tile.feature { background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: #fff; }
+    .tile.feature .name, .tile.feature .note { color: #fff; }
+    .tile.feature .ico { background: rgba(255, 255, 255, 0.2); color: #fff; }
+
+    /* Page tabs */
+    .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .tabs button {
+      font: inherit; font-weight: 600; font-size: 14px; color: var(--c);
+      background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+      padding: 9px 20px; cursor: pointer;
+    }
+    .tabs button::before {
+      content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+      margin-right: 8px; background: var(--c); vertical-align: 1px;
+    }
+    .tabwrap { position: relative; }
+    .tabwrap[data-tab="stocks"] { --c: #7b3fa0; --c2: #5f2d80; }
+    .tabwrap[data-tab="sales"] { --c: #d6336c; --c2: #c2255c; }
+    .tabwrap[data-tab="margin"] { --c: #008573; --c2: #006e60; }
+    .tabtip {
+      position: absolute; z-index: 20; left: 0; top: calc(100% + 9px);
+      width: max-content; max-width: min(280px, 82vw);
+      background: var(--c2); color: #fff; font-size: 12.5px; line-height: 1.4;
+      padding: 9px 12px; border-radius: 10px; box-shadow: 0 8px 22px rgba(59, 20, 38, 0.25);
+      visibility: hidden; opacity: 0; transform: translateY(-3px); pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+    }
+    .tabtip::before {
+      content: ""; position: absolute; left: 22px; top: -5px; width: 10px; height: 10px;
+      background: var(--c2); transform: rotate(45deg);
+    }
+    @media (max-width: 620px) {
+      .tabs { position: relative; }
+      .tabwrap { position: static; }
+      .tabtip { left: 0; right: 0; width: auto; max-width: none; }
+      .tabtip::before { display: none; }
+    }
+    .tabwrap:hover .tabtip, .tabwrap button:focus-visible + .tabtip {
+      visibility: visible; opacity: 1; transform: translateY(0);
+    }
+    .tabs button:hover { border-color: var(--c); }
+    .tabs button[aria-selected="true"] {
+      color: #fff; border-color: transparent;
+      background: linear-gradient(115deg, var(--c2), var(--c));
+      box-shadow: 0 4px 12px rgba(var(--glow), 0.3);
+    }
+    .tabs button[aria-selected="true"]::before { background: #fff; }
+
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+    .card { padding: 20px 22px; grid-column: span 12; min-width: 0; }
+    .half { grid-column: span 6; min-width: 0; }
+    @media (max-width: 860px) {
+      .half { grid-column: span 12; }
+      .showing { margin-left: 0; }
+      h1 { font-size: 28px; }
+    }
+    .card > .sub { margin: 3px 0 14px; }
+    .chart { position: relative; width: 100%; }
+    .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+    .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+    .legend i.rule { height: 2px; border-radius: 0; vertical-align: 3px; }
+    .split { display: flex; gap: 2px; height: 28px; margin: 12px 0 12px; }
+    .split div:first-child { border-radius: 8px 0 0 8px; }
+    .split div:last-child { border-radius: 0 8px 8px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      text-align: left; font-weight: 600; color: var(--deep); background: var(--blush);
+      padding: 8px 10px; position: sticky; top: 0;
+    }
+    th:first-child { border-radius: 8px 0 0 8px; }
+    th:last-child { border-radius: 0 8px 8px 0; }
+    td { border-bottom: 1px solid var(--line); padding: 7px 10px; overflow-wrap: anywhere; }
+    tbody tr:hover td { background: var(--hover); }
+    tr.total td { font-weight: 600; border-bottom: 0; color: var(--deep); }
+    .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    details { margin-top: 10px; font-size: 13px; }
+    summary { cursor: pointer; color: var(--deep); font-weight: 600; }
+    details table { margin-top: 8px; }
+    .scroll { max-height: 340px; overflow: auto; }
+    .tbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .tbar input {
+      flex: 1 1 180px; min-width: 0; font: inherit; font-size: 13px; color: var(--text);
+      background: var(--surface); border: 1px solid var(--axis); border-radius: 999px; padding: 7px 14px;
+    }
+    .tbar input::placeholder { color: var(--text-2); }
+    .tbar .count { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+    .tbar button {
+      font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+      color: var(--deep); background: var(--blush); border: 1px solid var(--axis);
+      border-radius: 999px; padding: 6px 14px;
+    }
+    .tbar button:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .tbar button:disabled { opacity: 0.6; cursor: wait; }
+    .tbar .clear { background: none; border-color: transparent; color: var(--deep); text-decoration: underline; padding: 6px 4px; }
+    .tbar .clear:hover { background: none; border-color: transparent; color: var(--accent); }
+    th .sort {
+      all: unset; cursor: pointer; display: inline-block; font-weight: 600; color: var(--deep);
+    }
+    th .sort::after { content: "\2195"; margin-left: 4px; font-size: 11px; opacity: 0.45; }
+    th[aria-sort="ascending"] .sort::after { content: "\2191"; opacity: 1; }
+    th[aria-sort="descending"] .sort::after { content: "\2193"; opacity: 1; }
+    th .sort:hover { color: var(--accent); }
+    th .sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+    tr.filters th { top: 35px; padding: 0 10px 8px; border-radius: 0; font-weight: 400; }
+    tr.filters input {
+      width: 100%; min-width: 44px; font: inherit; font-size: 12px; color: var(--text);
+      background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; padding: 3px 6px;
+    }
+    tr.filters th.n input { text-align: right; }
+    tr.filters input::placeholder { color: var(--text-2); opacity: 0.8; }
+    .empty { padding: 44px 20px; text-align: center; color: var(--text-2); }
+    footer { text-align: center; color: var(--text-2); font-size: 12px; padding: 0 20px 28px; }
+    #tip {
+      position: fixed; z-index: 10; pointer-events: none; display: none; max-width: 240px;
+      background: var(--text); color: #fff; font-size: 12px; padding: 6px 10px; border-radius: 8px;
+    }
+    svg text { fill: var(--text-2); font-size: 12px; }
+    svg text.strong { fill: var(--text); font-weight: 600; }
+    svg .hit { fill: transparent; }
+    svg .hit:hover { fill: var(--accent); fill-opacity: 0.06; }
+  </style>
+</head>
+<body data-section="{{ tab }}" data-period="{{ r.period }}">
+{% set icons = {
+  "money": '<path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  "heart": '<path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 22l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/>',
+  "chart": '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+  "percent": '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+  "box": '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>',
+  "tag": '<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/>',
+  "clock": '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  "scissors": '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9"/><path d="M14.5 14.5L20 20"/><path d="M8.1 8.1L12 12"/>',
+  "star": '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.2L5.8 21 7 14.2 2 9.3l6.9-1z"/>',
+  "pause": '<circle cx="12" cy="12" r="10"/><path d="M10 9v6"/><path d="M14 9v6"/>'
+} %}
+{% set tile_help = {
+  "Stock left, at cost": "What you paid for the resale stock still on the shelf at the end of this period.",
+  "Value at list prices": "What the stock left would bring in if every piece sold at its selling price.",
+  "No sales this period": "Money tied up in stock lines that sold nothing in this period.",
+  "Sold this period": "Cost of the stock sold in this period, as a share of all resale stock bought.",
+  "Time to clear stock": "How long the stock left would take to sell if sales continue at this period's pace.",
+  "Revenue": "All the money earned from services and products in this period.",
+  "Services": "Money earned from salon work such as braiding, washing and nails.",
+  "Products": "Money earned from items sold from stock.",
+  "Average per day": "Revenue divided by the days in this period, including days with no sales.",
+  "Best day": "The single day with the highest revenue in this period.",
+  "Kept": "Revenue left after product cost and commission. Rent, wages and other costs are not taken off yet.",
+  "Commission paid": "Total commission paid out in this period.",
+  "Commission rate": "Commission as a share of the money earned from services.",
+  "Product margin": "The share of product sales left after paying for those products.",
+  "Product gross profit": "Product sales minus what those products cost to buy."
+} %}
+{% macro tile(name, value, note, icon, feature=false) %}
+  {% set tip_id = "tiletip-" ~ name|lower|replace(",", "")|replace(" ", "-") %}
+  <div class="tile{{ ' feature' if feature }}" tabindex="0" aria-describedby="{{ tip_id }}">
+    <div class="top"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24">{{ icons[icon]|safe }}</svg></span><div class="name">{{ name }}</div></div>
+    <div class="value">{{ value }}</div>
+    <div class="note">{{ note }}</div>
+    <span class="tiletip" id="{{ tip_id }}" role="tooltip">{{ tile_help[name] }}</span>
+  </div>
+{% endmacro %}
+<div class="hero">
+  <div class="hero-in">
+    <div class="brand">
+      <span class="mono" aria-hidden="true">LB</span>
+      <div>
+        <h1>Lloeva Beauty</h1>
+        <div class="tagline">Business performance report</div>
+      </div>
+    </div>
+    <div class="hero-side">
+      <span>Updated {{ updated }}</span>
+      <a class="refresh" data-keep-tab href="{{ refresh_url }}">Refresh from sheet</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  {% if warning %}<div class="warning">{{ warning }}</div>{% endif %}
+
+  <nav class="filter" aria-label="Date filter">
+    <div class="segments">
+      {% for key, name in views %}
+        <a data-keep-tab href="{{ url_for('index', view=key, tab=tab) }}" {% if f.view == key %}aria-current="true"{% endif %}>{{ name }}</a>
+      {% endfor %}
+    </div>
+
+    <form method="get" action="/">
+      <input type="hidden" name="view" value="{{ f.view }}">
+      <input type="hidden" name="tab" value="{{ tab }}" data-tab-field>
+      {% if f.view == "custom" %}
+        <label for="start">From</label>
+        <input type="date" id="start" name="start" value="{{ f.start.isoformat() }}" min="{{ f.min }}" max="{{ f.max }}">
+        <label for="end">To</label>
+        <input type="date" id="end" name="end" value="{{ f.end.isoformat() }}" min="{{ f.min }}" max="{{ f.max }}">
+        <button class="apply" type="submit">Apply</button>
+      {% else %}
+        <label for="period">Period</label>
+        <select id="period" name="period" onchange="this.form.submit()">
+          {% for c in f.choices %}
+            <option value="{{ c.key }}" {% if c.key == f.key %}selected{% endif %}>{{ c.label }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
+    </form>
+
+    <div class="showing">Showing {{ r.period }}{% if r.has_data %} ({{ r.days }} day{{ "" if r.days == 1 else "s" }}){% endif %}</div>
+  </nav>
+
+  {% if not r.has_data %}
+    <div class="card empty">No sales were recorded in this period. Choose another period.</div>
+  {% else %}
+
+  <div class="tabs" role="tablist" aria-label="Report sections">
+    {% set tab_help = {
+      "stocks": "See what is on the shelf and what it cost, which items to restock, and which to hold off buying.",
+      "sales": "See the money earned by day, weekday, service and product in the selected period.",
+      "margin": "See how much is kept after product cost and commission, and which products earn the most."
+    } %}
+    {% for key, name in tabs %}
+      <div class="tabwrap" role="presentation" data-tab="{{ key }}">
+        <button role="tab" id="tab-{{ key }}" data-tab="{{ key }}" aria-controls="panel-{{ key }}" aria-describedby="tip-{{ key }}" aria-selected="{{ 'true' if key == tab else 'false' }}">{{ name }}</button>
+        <span class="tabtip" id="tip-{{ key }}" role="tooltip">{{ tab_help[key] }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Stocks -->
+  <div class="grid" role="tabpanel" id="panel-stocks" aria-labelledby="tab-stocks" {% if tab != "stocks" %}hidden{% endif %}>
+    <section class="tiles" aria-label="Stock headline figures">
+      {{ tile("Stock left, at cost", "KSh " ~ r.left_cost|ksh, "At the end of this period", "box", true) }}
+      {{ tile("Value at list prices", "KSh " ~ r.left_retail|ksh, "If all stock left sells", "tag") }}
+      {{ tile("No sales this period", "KSh " ~ r.unsold_cost|ksh, r.unsold_lines ~ " of " ~ r.priced_lines ~ " lines did not sell", "pause") }}
+      {{ tile("Sold this period", r.sold_share|round|int ~ "%", "Of resale stock, by cost", "chart") }}
+      {{ tile("Time to clear stock", (r.months_to_clear|round(1) ~ " months") if r.months_to_clear else "No sales", "At this period's pace", "clock") }}
+    </section>
+
+    <section class="card">
+      <h2>Where the stock money sits</h2>
+      <div class="split" role="img" aria-label="Sold to date {{ (r.invested - r.left_cost)|ksh }}, left with sales this period {{ (r.left_cost - r.unsold_cost)|ksh }}, left with no sales {{ r.unsold_cost|ksh }} KSh">
+        <div style="flex: {{ [r.invested - r.left_cost, 0]|max }}; background: var(--accent)"></div>
+        <div style="flex: {{ [r.left_cost - r.unsold_cost, 0]|max }}; background: var(--s2)"></div>
+        <div style="flex: {{ r.unsold_cost }}; background: var(--s3)"></div>
+      </div>
+      <div class="legend" style="margin-bottom: 0">
+        <span><i style="background: var(--accent)"></i>Sold to date: KSh {{ (r.invested - r.left_cost)|ksh }}</span>
+        <span><i style="background: var(--s2)"></i>Left, selling this period: KSh {{ (r.left_cost - r.unsold_cost)|ksh }}</span>
+        <span><i style="background: var(--s3)"></i>Left, no sales this period: KSh {{ r.unsold_cost|ksh }}</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>What to restock</h2>
+      <div class="sub">Lines that have sold and have one piece or none left, best sellers first.</div>
+      <table>
+        <thead><tr><th>Item</th><th class="n">Bought</th><th class="n">Sold to date</th><th class="n">Left</th><th class="n">Unit cost (KSh)</th><th class="n">Price (KSh)</th><th class="n">Margin</th></tr></thead>
+        <tbody>
+        {% for s in r.restock %}
+          <tr><td>{{ s.name }}</td><td class="n">{{ s.qty|qty }}</td><td class="n">{{ s.sold_to_date|qty }}</td><td class="n">{{ s.left|qty }}</td><td class="n">{{ s.cost|ksh }}</td><td class="n">{{ s.price|ksh }}</td><td class="n">{{ s.margin|round|int }}%</td></tr>
+        {% else %}
+          <tr><td colspan="7">Nothing is close to running out.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>What to hold</h2>
+      <div class="sub">Lines with no sales in this period, largest amount of money tied up first. Hold off buying more of these.</div>
+      <table>
+        <thead><tr><th>Item</th><th class="n">Left</th><th class="n">Unit cost (KSh)</th><th class="n">Price (KSh)</th><th class="n">Cost tied up (KSh)</th><th class="n">Margin</th></tr></thead>
+        <tbody>
+        {% for s in r.slow %}
+          <tr><td>{{ s.name }}</td><td class="n">{{ s.left|qty }}</td><td class="n">{{ s.cost|ksh }}</td><td class="n">{{ s.price|ksh }}</td><td class="n">{{ s.tied_up|ksh }}</td><td class="n">{{ s.margin|round|int }}%</td></tr>
+        {% else %}
+          <tr><td colspan="6">Every line sold in this period.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>All stock lines</h2>
+      <div class="sub">Sold is for the selected period. Left counts all sales up to the end of the period. Salon-use stock of KSh {{ r.used_cost|ksh }} is excluded.</div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Item</th><th class="n">Bought</th><th class="n">Sold</th><th class="n">Left</th><th class="n">Unit cost (KSh)</th><th class="n">Price (KSh)</th><th class="n">Margin</th></tr></thead>
+          <tbody>
+          {% for s in r.lines %}
+            <tr><td>{{ s.name }}</td><td class="n">{{ s.qty|qty }}</td><td class="n">{{ s.sold|qty }}</td><td class="n">{{ s.left|qty }}</td><td class="n">{{ s.cost|ksh }}</td><td class="n">{{ s.price|ksh }}</td><td class="n">{{ s.margin|round|int }}%</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if r.missing %}<p class="sub">Not listed because quantity or cost is missing in STOCKS: {{ r.missing|join(", ") }}.</p>{% endif %}
+    </section>
+  </div>
+
+  <!-- Sales and revenue -->
+  <div class="grid" role="tabpanel" id="panel-sales" aria-labelledby="tab-sales" {% if tab != "sales" %}hidden{% endif %}>
+    <section class="tiles" aria-label="Sales headline figures">
+      {{ tile("Revenue", "KSh " ~ r.revenue|ksh, r.trading_days ~ " of " ~ r.days ~ " days with sales", "money", true) }}
+      {{ tile("Services", "KSh " ~ r.service_revenue|ksh, r.service_share|round|int ~ "% of revenue, " ~ r.jobs|qty ~ " jobs", "scissors") }}
+      {{ tile("Products", "KSh " ~ r.product_revenue|ksh, (100 - r.service_share)|round|int ~ "% of revenue", "tag") }}
+      {{ tile("Average per day", "KSh " ~ r.average_day|ksh, "Across " ~ r.days ~ " days", "chart") }}
+      {{ tile("Best day", "KSh " ~ r.best_day.revenue|ksh, r.best_day.weekday ~ " " ~ r.best_day.label, "star") }}
+    </section>
+
+    <section class="card">
+      <h2>Revenue by day</h2>
+      <div class="sub">Services earned KSh {{ r.service_revenue|ksh }} ({{ r.service_share|round|int }}%) from {{ r.jobs|qty }} jobs. Products earned KSh {{ r.product_revenue|ksh }}.</div>
+      <div class="legend">
+        <span><i style="background: var(--muted)"></i>Daily revenue (KSh)</span>
+        <span><i class="rule" style="background: var(--accent)"></i>Weekly average per day</span>
+      </div>
+      <div class="chart" id="chart-daily"></div>
+      <details>
+        <summary>Show the daily figures</summary>
+        <div class="scroll">
+          <table data-title="Daily revenue figures">
+            <thead><tr><th>Date</th><th>Day</th><th class="n">Services (KSh)</th><th class="n">Products (KSh)</th><th class="n">Total (KSh)</th></tr></thead>
+            <tbody>
+            {% for d in r.daily|reverse %}
+              <tr><td data-sort="{{ d.date }}">{{ d.label }}</td><td>{{ d.weekday }}</td><td class="n">{{ d.service|ksh }}</td><td class="n">{{ d.product|ksh }}</td><td class="n">{{ d.revenue|ksh }}</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <section class="card half">
+      <h2>{{ r.best_weekday.day }} is the strongest day, {{ r.worst_weekday.day }} the weakest</h2>
+      <div class="sub">Average revenue per day (KSh) in this period.</div>
+      <div class="chart" id="chart-weekday"></div>
+    </section>
+
+    <section class="card half">
+      <h2>Top products by revenue</h2>
+      <div class="sub">Products sold in this period.</div>
+      <table>
+        <thead><tr><th>Item</th><th class="n">Units</th><th class="n">Revenue (KSh)</th></tr></thead>
+        <tbody>
+        {% for p in r.top_products %}
+          <tr><td>{{ p.name }}</td><td class="n">{{ p.sold|qty }}</td><td class="n">{{ p.revenue|ksh }}</td></tr>
+        {% else %}
+          <tr><td colspan="3">No products sold in this period.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Top five services earn {{ r.top_five_share|round|int }}% of service revenue</h2>
+      <div class="sub">Revenue in KSh, then average KSh per job. Job counts depend on the entries listed under Data checks.</div>
+      <div class="chart" id="chart-services"></div>
+    </section>
+
+    <section class="card">
+      <h2>Data checks</h2>
+      <div class="sub">These entries affect job counts, not total revenue.</div>
+      {% if r.mismatches %}
+        <h3>SALES and REVENUE disagree ({{ r.mismatches|length }} entries)</h3>
+        <table>
+          <thead><tr><th>Date</th><th>Item</th><th class="n">Revenue (KSh)</th><th class="n">Units</th></tr></thead>
+          <tbody>
+          {% for m in r.mismatches %}
+            <tr><td data-sort="{{ m.date }}">{{ m.label }}</td><td>{{ m.item }}</td><td class="n">{{ m.revenue|ksh }}</td><td class="n">{{ m.units|qty }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="sub">SALES and REVENUE match on every row in this period.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <!-- Commission and margin -->
+  <div class="grid" role="tabpanel" id="panel-margin" aria-labelledby="tab-margin" {% if tab != "margin" %}hidden{% endif %}>
+    <section class="tiles" aria-label="Commission and margin headline figures">
+      {{ tile("Kept", "KSh " ~ r.kept|ksh, r.kept_share|round|int ~ "% of revenue, before rent and wages", "heart", true) }}
+      {{ tile("Commission paid", "KSh " ~ r.commission|ksh, r.commission_total_share|round|int ~ "% of revenue", "money") }}
+      {{ tile("Commission rate", r.commission_rate|round|int ~ "%", "Of service revenue", "percent") }}
+      {{ tile("Product margin", r.product_margin|round|int ~ "%", "On items with a recorded cost", "chart") }}
+      {{ tile("Product gross profit", "KSh " ~ r.product_profit|ksh, "Sales less cost of products sold", "tag") }}
+    </section>
+
+    <section class="card">
+      <h2>{{ r.kept_share|round|int }}% of revenue is kept after product cost and commission</h2>
+      <div class="split" role="img" aria-label="Kept {{ r.kept|ksh }}, commission {{ r.commission|ksh }}, product cost {{ r.cogs|ksh }} KSh">
+        <div style="flex: {{ [r.kept, 0]|max }}; background: var(--accent)"></div>
+        <div style="flex: {{ r.commission }}; background: var(--s2)"></div>
+        <div style="flex: {{ r.cogs }}; background: var(--s3)"></div>
+      </div>
+      <div class="legend" style="margin-bottom: 0">
+        <span><i style="background: var(--accent)"></i>Kept: KSh {{ r.kept|ksh }}</span>
+        <span><i style="background: var(--s2)"></i>Commission: KSh {{ r.commission|ksh }}</span>
+        <span><i style="background: var(--s3)"></i>Cost of products sold: KSh {{ r.cogs|ksh }}</span>
+      </div>
+    </section>
+
+    <section class="card half">
+      {% if r.rates %}
+        <h2>Commission averages {{ r.commission_rate|round|int }}% of service revenue</h2>
+        <div class="sub">Share of each day's service revenue. Paid days range from {{ r.rate_low|round|int }}% to {{ r.rate_high|round|int }}%.</div>
+        <div class="chart" id="chart-commission"></div>
+      {% else %}
+        <h2>Commission</h2>
+        <div class="sub">No commission or service revenue is recorded for this period.</div>
+      {% endif %}
+    </section>
+
+    <section class="card half">
+      <h2>Summary for this period</h2>
+      <div class="sub">Rent, wages and other running costs are not in the sheet.</div>
+      <table>
+        <thead><tr><th>Line</th><th class="n">Amount (KSh)</th><th class="n">Share of revenue</th></tr></thead>
+        <tbody>
+          <tr><td>Revenue</td><td class="n">{{ r.revenue|ksh }}</td><td class="n">100%</td></tr>
+          <tr><td>Cost of products sold</td><td class="n">-{{ r.cogs|ksh }}</td><td class="n">{{ r.cogs_share|round|int }}%</td></tr>
+          <tr><td>Commission paid</td><td class="n">-{{ r.commission|ksh }}</td><td class="n">{{ r.commission_total_share|round|int }}%</td></tr>
+          <tr class="total"><td>Kept</td><td class="n">{{ r.kept|ksh }}</td><td class="n">{{ r.kept_share|round|int }}%</td></tr>
+        </tbody>
+      </table>
+      <p class="sub">Product gross profit is KSh {{ r.product_profit|ksh }}, a {{ r.product_margin|round|int }}% margin on items with a recorded cost.</p>
+    </section>
+
+    <section class="card half">
+      <h2>Most profitable products</h2>
+      <div class="sub">Gross profit on products sold in this period.</div>
+      <table>
+        <thead><tr><th>Item</th><th class="n">Units</th><th class="n">Profit (KSh)</th><th class="n">Margin</th></tr></thead>
+        <tbody>
+        {% for p in r.top_profit %}
+          <tr><td>{{ p.name }}</td><td class="n">{{ p.sold|qty }}</td><td class="n">{{ p.profit|ksh }}</td><td class="n">{{ p.margin|round|int }}%</td></tr>
+        {% else %}
+          <tr><td colspan="4">No products with a recorded cost sold in this period.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card half">
+      <h2>Thinnest margins in stock</h2>
+      <div class="sub">Lines still on the shelf, by list price against unit cost.</div>
+      <table>
+        <thead><tr><th>Item</th><th class="n">Cost (KSh)</th><th class="n">Price (KSh)</th><th class="n">Left</th><th class="n">Margin</th></tr></thead>
+        <tbody>
+        {% for s in r.low_margin %}
+          <tr><td>{{ s.name }}</td><td class="n">{{ s.cost|ksh }}</td><td class="n">{{ s.price|ksh }}</td><td class="n">{{ s.left|qty }}</td><td class="n">{{ s.margin|round|int }}%</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <div id="tip" role="status"></div>
+
+  <script id="report-data" type="application/json">{{ {
+    "daily": r.daily,
+    "weekdays": r.weekdays,
+    "services": r.services,
+    "rates": r.rates,
+    "commission_rate": r.commission_rate,
+    "average_day": r.average_day
+  }|tojson }}</script>
+
+  <script>
+  const DATA = JSON.parse(document.getElementById('report-data').textContent);
+  const NS = 'http://www.w3.org/2000/svg';
+  const money = v => Math.round(v).toLocaleString('en-US');
+  const tip = document.getElementById('tip');
+
+  function make(tag, attrs, text) {
+    const node = document.createElementNS(NS, tag);
+    for (const key in attrs) node.setAttribute(key, attrs[key]);
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function canvas(id, height) {
+    const box = document.getElementById(id);
+    box.textContent = '';
+    const width = Math.max(box.clientWidth, 280);
+    const svg = make('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img' });
+    box.appendChild(svg);
+    return { svg, width };
+  }
+
+  function hover(node, words) {
+    node.addEventListener('mousemove', e => {
+      tip.textContent = words;
+      tip.style.display = 'block';
+      const x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+      tip.style.left = `${x}px`;
+      tip.style.top = `${e.clientY + 14}px`;
+    });
+    node.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+  }
+
+  // Rounded at the data end, square at the baseline.
+  function column(x, y, w, base) {
+    const r = Math.min(4, w / 2, base - y);
+    return `M${x},${base}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${base}Z`;
+  }
+  function bar(x, y, w, h) {
+    const r = Math.min(4, h / 2, w);
+    return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+  }
+  const niceMax = (v, step) => Math.max(step, Math.ceil(v / step) * step);
+
+  function drawDaily() {
+    const rows = DATA.daily;
+    const { svg, width } = canvas('chart-daily', 320);
+    svg.setAttribute('aria-label', 'Daily revenue with weekly averages');
+    const left = 46, right = width - 6, y0 = 32, base = 292;
+    const maxV = niceMax(Math.max(...rows.map(r => r.revenue)), 1000);
+    const band = (right - left) / rows.length;
+    const y = v => base - v / maxV * (base - y0);
+    const everyDay = rows.length <= 14;
+    const step = Math.ceil(48 / band);
+    for (let t = 0; t <= maxV; t += 1000) {
+      svg.appendChild(make('line', { x1: left, x2: right, y1: y(t), y2: y(t), stroke: t ? 'var(--line)' : 'var(--axis)' }));
+      svg.appendChild(make('text', { x: left - 8, y: y(t) + 4, 'text-anchor': 'end' }, money(t)));
+    }
+    const barW = Math.max(1, Math.min(24, band - 2));
+    rows.forEach((r, i) => {
+      const x = left + i * band + (band - barW) / 2;
+      if (r.revenue > 0) svg.appendChild(make('path', { d: column(x, y(r.revenue), barW, base), fill: 'var(--muted)' }));
+      if (everyDay && i % step === 0) {
+        svg.appendChild(make('text', { x: left + (i + 0.5) * band, y: base + 20, 'text-anchor': 'middle' }, r.label));
+      }
+      const hit = make('rect', { class: 'hit', x: left + i * band, y: y0, width: band, height: base - y0 });
+      hover(hit, `${r.weekday} ${r.label}: KSh ${money(r.revenue)}`);
+      svg.appendChild(hit);
+    });
+    const weeks = [...new Set(rows.map(r => r.week))];
+    weeks.forEach(week => {
+      const group = rows.filter(r => r.week === week);
+      const start = rows.indexOf(group[0]);
+      const average = group.reduce((s, r) => s + r.revenue, 0) / group.length;
+      const x1 = left + start * band + 1, x2 = left + (start + group.length) * band - 1;
+      svg.appendChild(make('line', { x1, x2, y1: y(average), y2: y(average), stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-linecap': 'round', 'pointer-events': 'none' }));
+      if (x2 - x1 > 62) svg.appendChild(make('text', { class: 'strong', x: (x1 + x2) / 2, y: 16, 'text-anchor': 'middle' }, `KSh ${money(average)}`));
+      if (!everyDay && x2 - x1 > 40) svg.appendChild(make('text', { x: x1 + 1, y: base + 20 }, group[0].label));
+    });
+  }
+
+  function drawWeekday() {
+    const rows = DATA.weekdays;
+    const { svg, width } = canvas('chart-weekday', 270);
+    svg.setAttribute('aria-label', 'Average revenue by weekday');
+    const left = 4, right = width - 60, y0 = 12, base = 222;
+    const peak = Math.max(...rows.map(r => r.average), DATA.average_day);
+    const maxV = peak * 1.05;
+    const band = (right - left) / rows.length;
+    const y = v => base - v / maxV * (base - y0);
+    const best = Math.max(...rows.map(r => r.average));
+    svg.appendChild(make('line', { x1: left, x2: right, y1: base, y2: base, stroke: 'var(--axis)' }));
+    rows.forEach((r, i) => {
+      const cx = left + i * band + band / 2, w = Math.min(24, band - 4);
+      if (r.average > 0) svg.appendChild(make('path', { d: column(cx - w / 2, y(r.average), w, base), fill: r.average === best ? 'var(--accent)' : 'var(--muted)' }));
+      svg.appendChild(make('text', { x: cx, y: base + 18, 'text-anchor': 'middle' }, r.day));
+      svg.appendChild(make('text', { class: 'strong', x: cx, y: base + 36, 'text-anchor': 'middle' }, money(r.average)));
+      const hit = make('rect', { class: 'hit', x: left + i * band, y: y0, width: band, height: base - y0 });
+      hover(hit, `${r.day}: KSh ${money(r.average)} a day over ${r.days} day${r.days === 1 ? '' : 's'}`);
+      svg.appendChild(hit);
+    });
+    const ay = y(DATA.average_day);
+    svg.appendChild(make('line', { x1: left, x2: right + 4, y1: ay, y2: ay, stroke: 'var(--text-2)', 'stroke-dasharray': '4 4', 'pointer-events': 'none' }));
+    svg.appendChild(make('text', { x: right + 8, y: ay - 2 }, 'Average'));
+    svg.appendChild(make('text', { x: right + 8, y: ay + 13 }, money(DATA.average_day)));
+  }
+
+  function drawCommission() {
+    const rows = DATA.rates;
+    if (!rows.length) return;
+    const { svg, width } = canvas('chart-commission', 270);
+    svg.setAttribute('aria-label', 'Commission as a share of service revenue by day');
+    const left = 38, right = width - 62, y0 = 14, base = 240;
+    const maxP = niceMax(Math.max(...rows.map(r => r.rate)), 20);
+    const first = Date.parse(rows[0].date);
+    const span = Math.max(Date.parse(rows[rows.length - 1].date) - first, 1);
+    const x = r => left + 10 + (Date.parse(r.date) - first) / span * (right - left - 20);
+    const y = p => base - p / maxP * (base - y0);
+    for (let t = 0; t <= maxP; t += 20) {
+      svg.appendChild(make('line', { x1: left, x2: right, y1: y(t), y2: y(t), stroke: t ? 'var(--line)' : 'var(--axis)' }));
+      svg.appendChild(make('text', { x: left - 6, y: y(t) + 4, 'text-anchor': 'end' }, `${t}%`));
+    }
+    const ay = y(DATA.commission_rate);
+    svg.appendChild(make('line', { x1: left, x2: right + 4, y1: ay, y2: ay, stroke: 'var(--text-2)', 'stroke-dasharray': '4 4' }));
+    svg.appendChild(make('text', { x: right + 8, y: ay - 2 }, 'Average'));
+    svg.appendChild(make('text', { x: right + 8, y: ay + 13 }, `${Math.round(DATA.commission_rate)}%`));
+    const paid = rows.filter(r => r.commission > 0);
+    const high = paid.reduce((a, b) => (b.rate > a.rate ? b : a), paid[0]);
+    const low = paid.reduce((a, b) => (b.rate < a.rate ? b : a), paid[0]);
+    rows.forEach(r => {
+      const mark = r === high || r === low;
+      svg.appendChild(make('circle', { cx: x(r), cy: y(r.rate), r: 5, fill: mark ? 'var(--accent)' : 'var(--muted)', stroke: 'var(--surface)', 'stroke-width': 2 }));
+      const hit = make('circle', { class: 'hit', cx: x(r), cy: y(r.rate), r: 11 });
+      hover(hit, `${r.label}: KSh ${money(r.commission)} on KSh ${money(r.service)} of services (${Math.round(r.rate)}%)`);
+      svg.appendChild(hit);
+      if (mark && high !== low) {
+        const anchor = x(r) > right - 50 ? 'end' : (x(r) < left + 50 ? 'start' : 'middle');
+        svg.appendChild(make('text', { class: 'strong', x: x(r), y: y(r.rate) + (r === high ? -11 : 20), 'text-anchor': anchor }, `${r.label}: ${Math.round(r.rate)}%`));
+      }
+    });
+    svg.appendChild(make('text', { x: x(rows[0]), y: base + 20, 'text-anchor': 'start' }, rows[0].label));
+    if (rows.length > 1) svg.appendChild(make('text', { x: x(rows[rows.length - 1]), y: base + 20, 'text-anchor': 'end' }, rows[rows.length - 1].label));
+  }
+
+  function drawServices() {
+    const rows = DATA.services;
+    const box = document.getElementById('chart-services');
+    if (!rows.length) { box.textContent = 'No services in this period.'; return; }
+    const rowH = 30, height = rows.length * rowH + 4;
+    const { svg, width } = canvas('chart-services', height);
+    svg.setAttribute('aria-label', 'Revenue by service');
+    const left = Math.min(190, width * 0.38), room = width < 560 ? 70 : 170;
+    const maxV = Math.max(...rows.map(r => r.revenue), 1);
+    const scale = (width - left - room) / maxV;
+    rows.forEach((r, i) => {
+      const yy = i * rowH + 3, w = Math.max(r.revenue * scale, 2);
+      svg.appendChild(make('text', { class: 'strong', x: left - 10, y: yy + 16, 'text-anchor': 'end' }, r.name));
+      svg.appendChild(make('path', { d: bar(left, yy, w, 22), fill: !r.other && i < 5 ? 'var(--accent)' : 'var(--muted)' }));
+      const perJob = !r.other && r.jobs > 0 && width >= 560 ? `  ·  ${money(r.revenue / r.jobs)} per job` : '';
+      svg.appendChild(make('text', { x: left + w + 8, y: yy + 16 }, `${money(r.revenue)}${perJob}`));
+      const hit = make('rect', { class: 'hit', x: 0, y: i * rowH, width, height: rowH });
+      hover(hit, `${r.name}: KSh ${money(r.revenue)} from ${r.jobs} jobs`);
+      svg.appendChild(hit);
+    });
+  }
+
+  // Every table gets a search box and Excel and PDF export
+  function enhanceTable(table, index) {
+    const body = table.tBodies[0];
+    const rows = [...body.rows].filter(row => !row.querySelector('td[colspan]'));
+    if (!rows.length) return;
+    const section = table.closest('section');
+    const title = table.dataset.title || section.querySelector('h2').textContent.trim();
+    const columns = table.tHead.rows[0].cells.length;
+
+    const bar = document.createElement('div');
+    bar.className = 'tbar';
+    const search = document.createElement('input');
+    search.type = 'search';
+    search.placeholder = 'Search this table';
+    search.setAttribute('aria-label', `Search ${title}`);
+    const count = document.createElement('span');
+    count.className = 'count';
+    count.setAttribute('aria-live', 'polite');
+    const button = (label, kind) => {
+      const node = document.createElement('button');
+      node.type = 'button';
+      node.textContent = label;
+      node.title = `Download the rows shown as ${label}`;
+      node.addEventListener('click', () => exportTable(kind, node, label));
+      return node;
+    };
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'clear';
+    clear.textContent = 'Clear filters';
+    clear.hidden = true;
+    bar.append(search, count, clear, button('Excel', 'xlsx'), button('PDF', 'pdf'));
+
+    const none = document.createElement('tr');
+    const noneCell = document.createElement('td');
+    noneCell.colSpan = columns;
+    noneCell.textContent = 'No rows match your search.';
+    none.append(noneCell);
+    none.hidden = true;
+    body.append(none);
+
+    // Work out what each column holds, so it sorts and filters the right way
+    const cellText = (row, index) => row.cells[index].textContent.trim();
+    const toNumber = text => parseFloat(text.replace(/[,%]/g, ''));
+    const NUMERIC = /^-?\d[\d,]*(\.\d+)?%?$/;
+    const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const heads = [...table.tHead.rows[0].cells];
+    const kinds = heads.map((head, index) => {
+      const values = rows.map(row => cellText(row, index));
+      if (rows[0].cells[index].dataset.sort) return 'date';
+      if (values.every(value => NUMERIC.test(value))) return 'number';
+      if (values.every(value => DAYS.includes(value))) return 'day';
+      return 'text';
+    });
+
+    function matchesNumber(text, rule) {
+      const value = toNumber(text);
+      const range = rule.match(/^(-?[\d,.]+)\s*(?:-|to)\s*(-?[\d,.]+)$/);
+      if (range) return value >= toNumber(range[1]) && value <= toNumber(range[2]);
+      const compare = rule.match(/^(>=|<=|>|<|=)\s*(-?[\d,.]+)%?$/);
+      if (!compare) return text.toLowerCase().includes(rule.toLowerCase());
+      const limit = toNumber(compare[2]);
+      return { '>': value > limit, '<': value < limit, '>=': value >= limit, '<=': value <= limit, '=': value === limit }[compare[1]];
+    }
+    const matchesText = (text, rule) => rule.toLowerCase().split(/\s+/).every(word => text.toLowerCase().includes(word));
+
+    // A filter box under every column heading
+    const filterRow = document.createElement('tr');
+    filterRow.className = 'filters';
+    const filters = heads.map((head, index) => {
+      const cell = document.createElement('th');
+      cell.className = head.className;
+      const box = document.createElement('input');
+      box.type = 'text';
+      box.size = 1;
+      box.placeholder = kinds[index] === 'number' ? '>10' : 'Filter';
+      box.title = kinds[index] === 'number' ? 'Type a value, or use >10, <5 or 10-20' : 'Type to filter this column';
+      box.setAttribute('aria-label', `Filter ${head.textContent.trim()}`);
+      box.addEventListener('input', refresh);
+      cell.append(box);
+      filterRow.append(cell);
+      return box;
+    });
+    table.tHead.append(filterRow);
+
+    function refresh() {
+      const words = search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      const rules = filters.map(box => box.value.trim());
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const inSearch = words.every(word => text.includes(word));
+        const inColumns = rules.every((rule, index) => {
+          if (!rule) return true;
+          const value = cellText(row, index);
+          return kinds[index] === 'number' ? matchesNumber(value, rule) : matchesText(value, rule);
+        });
+        row.hidden = !(inSearch && inColumns);
+      });
+      const shown = visible().length;
+      none.hidden = shown > 0;
+      count.textContent = `${shown} of ${rows.length}`;
+      clear.hidden = !words.length && !rules.some(Boolean);
+    }
+
+    clear.addEventListener('click', () => {
+      search.value = '';
+      filters.forEach(box => { box.value = ''; });
+      refresh();
+    });
+
+    // Click a heading to sort. Numbers start biggest first; a third click restores the order.
+    const original = [...rows];
+    let order = original;
+    let sortedBy = null;
+    let direction = null;
+    const visible = () => order.filter(row => !row.hidden);
+
+    function compare(a, b, index) {
+      const x = cellText(a, index), y = cellText(b, index);
+      if (kinds[index] === 'number') return toNumber(x) - toNumber(y);
+      if (kinds[index] === 'day') return DAYS.indexOf(x) - DAYS.indexOf(y);
+      if (kinds[index] === 'date') return a.cells[index].dataset.sort.localeCompare(b.cells[index].dataset.sort);
+      return x.localeCompare(y, undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    function sortBy(index) {
+      const first = kinds[index] === 'number' ? 'descending' : 'ascending';
+      const second = first === 'ascending' ? 'descending' : 'ascending';
+      if (sortedBy !== index) direction = first;
+      else direction = direction === first ? second : null;
+      sortedBy = direction ? index : null;
+      heads.forEach((head, column) => {
+        if (column === sortedBy) head.setAttribute('aria-sort', direction);
+        else head.removeAttribute('aria-sort');
+      });
+      order = direction
+        ? [...original].sort((a, b) => compare(a, b, index) * (direction === 'ascending' ? 1 : -1))
+        : original;
+      body.append(...order, none);
+    }
+
+    heads.forEach((head, index) => {
+      const label = head.textContent.trim();
+      const sort = document.createElement('button');
+      sort.type = 'button';
+      sort.className = 'sort';
+      sort.textContent = label;
+      sort.title = `Sort by ${label}`;
+      sort.addEventListener('click', () => sortBy(index));
+      head.textContent = '';
+      head.append(sort);
+    });
+
+    async function exportTable(kind, node, label) {
+      const shown = visible();
+      if (!shown.length) { count.textContent = 'No rows to export'; return; }
+      node.disabled = true;
+      node.textContent = 'Preparing';
+      try {
+        const period = document.body.dataset.period;
+        const response = await fetch(`/export/${kind}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            period,
+            headers: [...table.tHead.rows[0].cells].map(cell => cell.textContent.trim()),
+            rows: shown.map(row => [...row.cells].map(cell => cell.textContent.trim())),
+          }),
+        });
+        if (!response.ok) throw new Error(response.status);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(await response.blob());
+        link.download = `Lloeva Beauty - ${title} - ${period}.${kind}`.replace(/[^\w ().-]+/g, ' ');
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      } catch (error) {
+        count.textContent = 'Export failed. Restart the app and try again.';
+      }
+      node.disabled = false;
+      node.textContent = label;
+    }
+
+    const holder = table.closest('.scroll');
+    if (holder) {
+      holder.before(bar);
+    } else {
+      table.before(bar);
+      if (rows.length > 10) {
+        const scroll = document.createElement('div');
+        scroll.className = 'scroll';
+        table.before(scroll);
+        scroll.append(table);
+      }
+    }
+    search.addEventListener('input', refresh);
+    refresh();
+  }
+  document.querySelectorAll('[role="tabpanel"] table').forEach(enhanceTable);
+
+  // Charts need a visible container to measure, so each tab draws when shown.
+  const CHARTS = {
+    stocks: [],
+    sales: [drawDaily, drawWeekday, drawServices],
+    margin: [drawCommission],
+  };
+  const buttons = [...document.querySelectorAll('[role="tab"]')];
+  let active = buttons.find(b => b.getAttribute('aria-selected') === 'true').dataset.tab;
+
+  function drawActive() { CHARTS[active].forEach(draw => draw()); }
+
+  function showTab(name) {
+    active = name;
+    document.body.dataset.section = name;
+    buttons.forEach(b => {
+      const on = b.dataset.tab === name;
+      b.setAttribute('aria-selected', on);
+      document.getElementById(`panel-${b.dataset.tab}`).hidden = !on;
+    });
+    // Keep the tab when the filter changes
+    document.querySelectorAll('[data-tab-field]').forEach(field => { field.value = name; });
+    document.querySelectorAll('[data-keep-tab]').forEach(link => {
+      const url = new URL(link.href);
+      url.searchParams.set('tab', name);
+      link.href = url;
+    });
+    const page = new URL(location.href);
+    page.searchParams.set('tab', name);
+    page.searchParams.delete('refresh');
+    history.replaceState(null, '', page);
+    drawActive();
+  }
+
+  buttons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  drawActive();
+  let timer;
+  window.addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(drawActive, 120); });
+  </script>
+  {% endif %}
+</div>
+<footer>Lloeva Beauty. Figures come from the business Google Sheet.</footer>
+</body>
+</html>
