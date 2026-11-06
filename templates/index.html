@@ -88,6 +88,7 @@
       box-shadow: 0 4px 12px rgba(59, 20, 38, 0.2);
     }
     .refresh:hover { background: var(--blush); }
+    .signout { font-family: inherit; cursor: pointer; }
 
     .wrap { position: relative; z-index: 2; max-width: 1160px; margin: -52px auto 0; padding: 0 20px 40px; }
     h2 { margin: 0; font: 600 19px/1.3 var(--serif); color: var(--text); }
@@ -325,6 +326,9 @@
     <div class="hero-side">
       <span>Updated {{ updated }}</span>
       <a class="refresh" data-keep-tab href="{{ refresh_url }}">Refresh from sheet</a>
+      {% if can_sign_out %}
+      <form method="post" action="{{ url_for('logout') }}"><button class="refresh signout" type="submit">Sign out</button></form>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -956,6 +960,7 @@
             rows: shown.map(row => [...row.cells].map(cell => cell.textContent.trim())),
           }),
         });
+        if (response.status === 401) { location.reload(); return; }
         if (!response.ok) throw new Error(response.status);
         const link = document.createElement('a');
         link.href = URL.createObjectURL(await response.blob());
@@ -963,7 +968,7 @@
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
       } catch (error) {
-        count.textContent = 'Export failed. Restart the app and try again.';
+        count.textContent = 'Export failed. Refresh the page and try again.';
       }
       node.disabled = false;
       node.textContent = label;

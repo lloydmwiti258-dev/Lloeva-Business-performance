@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Sign in | Lloeva Beauty</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh; margin: 0; padding: 20px; display: grid; place-items: center;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #3b1426;
+      background: linear-gradient(135deg, #fff5f8, #ffe3ec);
+    }
+    main {
+      width: 100%; max-width: 380px; padding: 32px; background: #fff; border-radius: 18px;
+      box-shadow: 0 14px 40px rgba(59, 20, 38, 0.12);
+    }
+    .mono {
+      display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 16px;
+      border-radius: 50%; background: #c2255c; color: #fff; font-weight: 700;
+    }
+    h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 26px; }
+    p { margin: 6px 0 22px; color: #7a5566; font-size: 14px; line-height: 1.45; }
+    label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
+    input {
+      width: 100%; padding: 11px 12px; border: 1px solid #e8b9ca; border-radius: 10px;
+      font: inherit; color: inherit;
+    }
+    input:focus { outline: 2px solid #c2255c; outline-offset: 1px; }
+    button {
+      width: 100%; margin-top: 16px; padding: 11px; border: 0; border-radius: 10px;
+      background: #c2255c; color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+    }
+    button:hover { background: #a61e4d; }
+    .error { margin: 12px 0 0; color: #a61e4d; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mono" aria-hidden="true">LB</div>
+    <h1>Lloeva Beauty</h1>
+    {% if ready %}
+    <p>Sign in to view the business report.</p>
+    <form method="post" action="{{ url_for('login') }}">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+      {% if failed %}<p class="error" role="alert">That password is not correct.</p>{% endif %}
+      <button type="submit">Sign in</button>
+    </form>
+    {% else %}
+    <p>Sign-in is not set up yet. Add DASHBOARD_PASSWORD and SECRET_KEY to the hosting settings, then redeploy.</p>
+    {% endif %}
+  </main>
+</body>
+</html>

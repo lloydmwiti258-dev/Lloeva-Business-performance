@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+*service-account*.json
+*service_account*.json
+*credentials*.json
+*.pem
+*.key
+Lloeva Beauty - *.xlsx
+Lloeva Beauty - *.pdf
+__pycache__/
+.venv/
+venv/
+.claude/
+.vscode/

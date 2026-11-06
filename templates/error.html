@@ -11,8 +11,8 @@
 </head>
 <body>
   <h1>The report could not load</h1>
-  <p>The app could not read the Google Sheet. Check the credentials in .env and that the sheet is shared with the service account.</p>
-  <code>{{ message }}</code>
+  <p>The app could not read the Google Sheet. Check the credentials and that the sheet is shared with the service account.</p>
+  {% if message %}<code>{{ message }}</code>{% endif %}
   <p><a href="/?refresh=1">Try again</a></p>
 </body>
 </html>

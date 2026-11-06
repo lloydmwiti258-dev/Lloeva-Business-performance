@@ -1,23 +1,28 @@
 """Lloeva Beauty business dashboard.
 
-Reads the Google Sheet (STOCKS, SALES, REVENUE, COMMISION tabs) with the service
-account in .env and serves a report at http://127.0.0.1:5009.
+Reads the Google Sheet (STOCKS, SALES, REVENUE, COMMISION tabs) with a service
+account and serves a report. Settings come from environment variables, or from
+.env when running locally.
 
-Run:  python app.py
+Run locally:  python app.py  (http://127.0.0.1:5009)
+Hosted:       Vercel loads `app` from this file. See the README.
 """
 
+import hmac
 import json
+import os
 import re
+import secrets
 import threading
 import time
 from collections import OrderedDict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
 from xml.sax.saxutils import escape
 
 import gspread
-from flask import Flask, abort, render_template, request, send_file, url_for
+from flask import Flask, abort, redirect, render_template, request, send_file, session, url_for
 from google.oauth2.service_account import Credentials
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -33,6 +38,9 @@ BASE_DIR = Path(__file__).resolve().parent
 ENV_FILE = BASE_DIR / ".env"
 PORT = 5009
 CACHE_SECONDS = 300
+BUSINESS_TZ = timezone(timedelta(hours=3))  # Kenya time, which has no daylight saving
+SESSION_HOURS = 12
+MAX_REQUEST_BYTES = 4 * 1024 * 1024  # Vercel rejects bodies over 4.5 MB
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 SHEET_TABS = ["STOCKS", "SALES", "REVENUE", "COMMISION"]
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -56,46 +64,83 @@ PAGE_TABS = [
     ("margin", "Commission and margin"),
 ]
 
+# Anything other than `python app.py` counts as hosted, so a server that isn't
+# set up correctly stays locked rather than open.
+IS_HOSTED = __name__ != "__main__" or bool(os.environ.get("VERCEL"))
+
+
+def env_file_text():
+    try:
+        return ENV_FILE.read_text(encoding="utf-8-sig")
+    except FileNotFoundError:
+        return ""  # normal when hosted: settings are environment variables
+
+
+def setting(key):
+    """Return a setting from the environment, falling back to .env."""
+    value = os.environ.get(key, "").strip()
+    if not value:
+        match = re.search(rf"^{key}\s*=\s*(.*)$", env_file_text(), re.MULTILINE)
+        value = match.group(1).strip() if match else ""
+    return value.strip("'\"")
+
+
 app = Flask(__name__)
-app.config["TEMPLATES_AUTO_RELOAD"] = True  # page edits show on refresh
+app.config.update(
+    TEMPLATES_AUTO_RELOAD=not IS_HOSTED,  # page edits show on refresh
+    MAX_CONTENT_LENGTH=MAX_REQUEST_BYTES,
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=SESSION_HOURS),
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=IS_HOSTED,
+)
+# Hosted instances must share one key, so a missing key is not replaced here.
+app.secret_key = setting("SECRET_KEY") or (None if IS_HOSTED else secrets.token_hex(32))
+
+
+def now_local():
+    return datetime.now(BUSINESS_TZ)
 
 
 # --------------------------------------------------------------------------
 # Google Sheet access
 # --------------------------------------------------------------------------
 
-def read_env():
-    """Return (service account credentials, sheet id) from .env.
+def read_credentials_json():
+    """Return the service account JSON text, or "" if it isn't set.
 
-    The key is stored as multi-line JSON, which standard .env parsers can't
-    read, so the file is parsed here.
+    Locally the key is stored as multi-line JSON, which standard .env parsers
+    can't read, so the file is parsed here.
     """
-    text = ENV_FILE.read_text(encoding="utf-8-sig")
-
-    def value(key):
-        match = re.search(rf"^{key}\s*=\s*(.*)$", text, re.MULTILINE)
-        return match.group(1).strip().strip("'\"") if match else ""
-
-    sheet_id = value("SHEET_ID")
-    if not sheet_id:
-        raise RuntimeError("SHEET_ID is missing from .env")
-
+    value = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON", "").strip().strip("'\"")
+    if value.endswith("}"):  # tools that load .env keep only the first line, "{"
+        return value
     match = re.search(
         r"^GOOGLE_APPLICATION_CREDENTIALS_JSON\s*=\s*['\"]?(\{.*?^\}|\{[^\n]*\})",
-        text,
+        env_file_text(),
         re.MULTILINE | re.DOTALL,
     )
-    if match:
-        info = json.loads(match.group(1), strict=False)
+    return match.group(1) if match else ""
+
+
+def read_env():
+    """Return (service account credentials, sheet id)."""
+    sheet_id = setting("SHEET_ID")
+    if not sheet_id:
+        raise RuntimeError("SHEET_ID is not set")
+
+    credentials_json = read_credentials_json()
+    if credentials_json:
+        info = json.loads(credentials_json, strict=False)
         return Credentials.from_service_account_info(info, scopes=SCOPES), sheet_id
 
-    key_path = value("GOOGLE_APPLICATION_CREDENTIALS")
+    key_path = setting("GOOGLE_APPLICATION_CREDENTIALS")
     if key_path:
         path = Path(key_path)
         path = path if path.is_absolute() else BASE_DIR / path
         return Credentials.from_service_account_file(str(path), scopes=SCOPES), sheet_id
 
-    raise RuntimeError("No service account credentials found in .env")
+    raise RuntimeError("No service account credentials are set")
 
 
 def fetch_sheet():
@@ -678,7 +723,7 @@ def build_pdf(table):
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(colors.HexColor("#7A5566"))
-        canvas.drawString(margin, 8 * mm, f"Lloeva Beauty. Exported {date.today():%d %b %Y}.")
+        canvas.drawString(margin, 8 * mm, f"Lloeva Beauty. Exported {now_local():%d %b %Y}.")
         canvas.drawRightString(size[0] - margin, 8 * mm, f"Page {document.page}")
         canvas.restoreState()
 
@@ -718,7 +763,7 @@ def get_data(force=False):
         try:
             _cache["data"] = parse_sheet(fetch_sheet())
             _cache["loaded"] = time.time()
-            _cache["updated"] = datetime.now().strftime("%d %b %Y, %H:%M")
+            _cache["updated"] = now_local().strftime("%d %b %Y, %H:%M")
             return _cache["data"], _cache["updated"], None
         except Exception as error:
             app.logger.exception("Could not load the sheet")
@@ -726,6 +771,56 @@ def get_data(force=False):
                 warning = "Could not reach the sheet, so this is the last saved data."
                 return _cache["data"], _cache["updated"], warning
             raise RuntimeError(f"{type(error).__name__}: {error}") from error
+
+
+def login_required():
+    return IS_HOSTED or bool(setting("DASHBOARD_PASSWORD"))
+
+
+def login_ready():
+    return bool(setting("DASHBOARD_PASSWORD") and app.secret_key)
+
+
+@app.before_request
+def require_login():
+    if request.endpoint == "login" or not login_required() or session.get("signed_in"):
+        return None
+    if request.method != "GET":
+        abort(401)  # the page reloads and shows the sign-in form
+    return redirect(url_for("login"))
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers["Cache-Control"] = "private, no-store"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "same-origin"
+    return response
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not login_ready():
+        return render_template("login.html", ready=False), 503
+    if request.method == "GET":
+        return render_template("login.html", ready=True, failed=False)
+
+    supplied = request.form.get("password", "").encode("utf-8")
+    if hmac.compare_digest(supplied, setting("DASHBOARD_PASSWORD").encode("utf-8")):
+        session.clear()
+        session.permanent = True
+        session["signed_in"] = True
+        return redirect(url_for("index"))
+    time.sleep(1)  # slows password guessing
+    return render_template("login.html", ready=True, failed=True), 401
+
+
+@app.post("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 @app.template_filter("ksh")
@@ -744,7 +839,8 @@ def index():
     try:
         data, updated, warning = get_data(force)
     except RuntimeError as error:
-        return render_template("error.html", message=str(error)), 503
+        # Hosted pages keep the technical detail in the logs only
+        return render_template("error.html", message=None if IS_HOSTED else str(error)), 503
 
     current = resolve_filter(request.args, data["dates"])
     report = build_report(data, current["start"], current["end"])
@@ -768,6 +864,7 @@ def index():
         refresh_url=url_for("index", refresh=1, **keep),
         updated=updated,
         warning=warning,
+        can_sign_out=login_required(),
     )
 
 
@@ -790,4 +887,4 @@ def export_table(kind):
 
 if __name__ == "__main__":
     print(f"Lloeva Beauty dashboard: http://127.0.0.1:{PORT}")
-    app.run(host="127.0.0.1", port=PORT, debug=False)
+    app.run(host="127.0.0.1", port=PORT, debug=False, load_dotenv=False)
