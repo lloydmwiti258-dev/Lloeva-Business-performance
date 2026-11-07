@@ -94,7 +94,17 @@
     .wrap { position: relative; z-index: 2; max-width: 1160px; margin: -52px auto 0; padding: 0 20px 40px; }
     h2 { margin: 0; font: 600 19px/1.3 var(--serif); color: var(--text); }
     h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--deep); }
-    h3.chart-title { margin-top: 20px; }
+    h3.chart-title { margin: 0; }
+    .chart-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 22px 0 6px; }
+    .segments button {
+      padding: 6px 16px; border: 0; border-radius: 999px; background: none; cursor: pointer;
+      font: inherit; font-size: 13px; font-weight: 600; color: var(--text-2);
+    }
+    .segments button:hover { color: var(--deep); }
+    .segments button[aria-pressed="true"] {
+      background: linear-gradient(115deg, var(--accent-2), var(--accent)); color: #fff;
+      box-shadow: 0 3px 10px rgba(var(--glow), 0.35);
+    }
     .sub { color: var(--text-2); font-size: 13px; }
     .warning { background: var(--warn-bg); padding: 10px 14px; border-radius: 12px; margin-bottom: 14px; }
 
@@ -315,7 +325,7 @@
 
       .filter { padding: 10px; gap: 10px; }
       .segments { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
-      .segments a { padding: 11px 2px; text-align: center; }
+      .segments a, .segments button { padding: 11px 2px; text-align: center; min-height: 44px; }
       .filter form { width: 100%; }
       .filter form select { flex: 1; min-width: 0; }
       .filter form input[type="date"] { flex: 1 1 calc(100% - 52px); min-width: 0; }
@@ -690,8 +700,16 @@
           <span><i style="background: var(--s2)"></i>Commission: KSh {{ paid|ksh }} ({{ per100|round|int }}%)</span>
           <span><i style="background: var(--muted)"></i>Left from services: KSh {{ (earned - paid)|ksh }} ({{ (100 - per100)|round|int }}%)</span>
         </div>
-        <h3 class="chart-title">Day by day</h3>
-        <div class="sub">Each bar is one day's service revenue. The purple part is the commission paid that day. Tap or point at a bar for the figures.</div>
+        <div class="chart-head">
+          <h3 class="chart-title" id="commission-title">Day by day</h3>
+          <div class="segments views" role="group" aria-label="Choose how to show commission">
+            <button type="button" data-view="bars" aria-pressed="true">Bars</button>
+            <button type="button" data-view="line" aria-pressed="false">Line</button>
+            <button type="button" data-view="pie" aria-pressed="false">Pie</button>
+            <button type="button" data-view="table" aria-pressed="false">Table</button>
+          </div>
+        </div>
+        <div class="sub" id="commission-note"></div>
         <div class="chart" id="chart-commission"></div>
       {% else %}
         <h2>Commission</h2>
@@ -867,9 +885,141 @@
     svg.appendChild(make('text', { x: right + 8, y: ay + 13 }, money(DATA.average_day)));
   }
 
+  // Viewers pick how commission is shown; the choice is kept in their own browser.
+  const COMMISSION_VIEWS = {
+    bars: ['Day by day', "Each bar is one day's service revenue. The purple part is the commission paid that day. Tap or point at a bar for the figures.", commissionBars],
+    line: ['Commission rate by day', 'The share of each day\'s service revenue paid as commission. The dashed line is the average for the period.', commissionLine],
+    pie: ['Whole period', 'Where the service money went across the period.', commissionPie],
+    table: ['The figures', 'Every day with a commission entry, newest first.', commissionTable],
+  };
+  let commissionView = 'bars';
+  try { if (COMMISSION_VIEWS[localStorage.getItem('commissionView')]) commissionView = localStorage.getItem('commissionView'); } catch (e) {}
+  document.querySelectorAll('.views [data-view]').forEach(button => button.addEventListener('click', () => {
+    commissionView = button.dataset.view;
+    try { localStorage.setItem('commissionView', commissionView); } catch (e) {}
+    drawCommission();
+  }));
+
   function drawCommission() {
     const rows = DATA.rates;
     if (!rows.length) return;
+    const [title, note, draw] = COMMISSION_VIEWS[commissionView];
+    document.getElementById('commission-title').textContent = title;
+    document.getElementById('commission-note').textContent = note;
+    document.querySelectorAll('.views [data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === commissionView));
+    hideTip();
+    draw(rows);
+  }
+
+  function commissionLine(rows) {
+    const { svg, width } = canvas('chart-commission', 300);
+    svg.setAttribute('aria-label', 'Commission as a share of service revenue by day');
+    const left = 40, right = width - (width < 460 ? 10 : 70), y0 = 24, base = 266;
+    const maxP = niceMax(Math.max(...rows.map(r => r.rate)), 20);
+    const band = (right - left) / rows.length;
+    const x = i => left + (i + 0.5) * band;
+    const y = p => base - p / maxP * (base - y0);
+    const step = Math.ceil(48 / band);
+    for (let t = 0; t <= maxP; t += 20) {
+      svg.appendChild(make('line', { x1: left, x2: right, y1: y(t), y2: y(t), stroke: t ? 'var(--line)' : 'var(--axis)' }));
+      svg.appendChild(make('text', { x: left - 8, y: y(t) + 4, 'text-anchor': 'end' }, `${t}%`));
+    }
+    const ay = y(DATA.commission_rate);
+    svg.appendChild(make('line', { x1: left, x2: right, y1: ay, y2: ay, stroke: 'var(--text-2)', 'stroke-dasharray': '4 4', 'pointer-events': 'none' }));
+    const avg = `Average ${Math.round(DATA.commission_rate)}%`;
+    if (width < 460) svg.appendChild(make('text', { class: 'strong', x: right, y: y0 - 8, 'text-anchor': 'end' }, `- - ${avg}`));
+    else svg.appendChild(make('text', { class: 'strong', x: right + 8, y: ay + 4 }, avg));
+    svg.appendChild(make('path', {
+      d: rows.map((r, i) => `${i ? 'L' : 'M'}${x(i)},${y(r.rate)}`).join(''),
+      fill: 'none', stroke: 'var(--s2)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'pointer-events': 'none',
+    }));
+    rows.forEach((r, i) => {
+      if (band >= 9) svg.appendChild(make('circle', { cx: x(i), cy: y(r.rate), r: 4, fill: 'var(--s2)', stroke: 'var(--surface)', 'stroke-width': 2, 'pointer-events': 'none' }));
+      if (i % step === 0) svg.appendChild(make('text', { x: x(i), y: base + 20, 'text-anchor': 'middle' }, r.label));
+      const hit = make('rect', { class: 'hit', x: left + i * band, y: y0, width: band, height: base - y0 });
+      hover(hit, `${r.label}: ${Math.round(r.rate)}% (KSh ${money(r.commission)} of KSh ${money(r.service)} from services)`);
+      svg.appendChild(hit);
+    });
+  }
+
+  function commissionPie(rows) {
+    const paid = rows.reduce((s, r) => s + r.commission, 0);
+    const earned = rows.reduce((s, r) => s + r.service, 0);
+    const kept = Math.max(earned - paid, 0);
+    const { svg, width } = canvas('chart-commission', 280);
+    svg.setAttribute('aria-label', `Commission KSh ${money(paid)}, left from services KSh ${money(kept)}`);
+    const wide = width >= 520;
+    const cx = wide ? width / 2 - 120 : width / 2, cy = 140, outer = 120, inner = 74;
+    const slices = [
+      { name: 'Commission', value: paid, fill: 'var(--s2)' },
+      { name: 'Left from services', value: kept, fill: 'var(--muted)' },
+    ].filter(s => s.value > 0);
+    const total = paid + kept;
+    const point = (a, rad) => [cx + rad * Math.sin(a), cy - rad * Math.cos(a)];
+    let start = 0;
+    slices.forEach(s => {
+      const sweep = s.value / total * Math.PI * 2;
+      const share = Math.round(s.value / total * 100);
+      let node;
+      if (slices.length === 1) {
+        node = make('circle', { cx, cy, r: (outer + inner) / 2, fill: 'none', stroke: s.fill, 'stroke-width': outer - inner });
+      } else {
+        const end = start + sweep, big = sweep > Math.PI ? 1 : 0;
+        const [x1, y1] = point(start, outer), [x2, y2] = point(end, outer);
+        const [x3, y3] = point(end, inner), [x4, y4] = point(start, inner);
+        node = make('path', {
+          d: `M${x1},${y1}A${outer},${outer} 0 ${big} 1 ${x2},${y2}L${x3},${y3}A${inner},${inner} 0 ${big} 0 ${x4},${y4}Z`,
+          fill: s.fill, stroke: 'var(--surface)', 'stroke-width': 2, 'stroke-linejoin': 'round',
+        });
+      }
+      node.style.cursor = 'pointer';
+      hover(node, `${s.name}: KSh ${money(s.value)} (${share}% of service revenue)`);
+      svg.appendChild(node);
+      start += sweep;
+    });
+    svg.appendChild(make('text', { class: 'strong', x: cx, y: cy + 2, 'text-anchor': 'middle', style: 'font-size: 28px' }, `${Math.round(paid / total * 100)}%`));
+    svg.appendChild(make('text', { x: cx, y: cy + 22, 'text-anchor': 'middle' }, 'paid as commission'));
+    if (wide) {
+      // Labels to the right of the ring
+      const lx = cx + outer + 40;
+      [['Commission', paid, 'var(--s2)'], ['Left from services', kept, 'var(--muted)'], ['Service revenue', earned, null]].forEach(([name, value, fill], i) => {
+        const ly = 84 + i * 50;
+        if (fill) svg.appendChild(make('rect', { x: lx, y: ly - 11, width: 12, height: 12, rx: 3, fill }));
+        svg.appendChild(make('text', { x: lx + (fill ? 20 : 0), y: ly }, name));
+        svg.appendChild(make('text', { class: 'strong', x: lx + (fill ? 20 : 0), y: ly + 20, style: 'font-size: 15px' }, `KSh ${money(value)}`));
+      });
+    }
+  }
+
+  function commissionTable(rows) {
+    const box = document.getElementById('chart-commission');
+    box.textContent = '';
+    const scroll = document.createElement('div');
+    scroll.className = 'scroll';
+    const table = document.createElement('table');
+    const heads = [['Date', ''], ['Services (KSh)', 'n'], ['Commission (KSh)', 'n'], ['Rate', 'n'], ['Left (KSh)', 'n']];
+    const headRow = table.createTHead().insertRow();
+    heads.forEach(([text, cls]) => { const th = document.createElement('th'); th.textContent = text; th.className = cls; headRow.appendChild(th); });
+    const body = table.createTBody();
+    const add = (cells, total) => {
+      const tr = body.insertRow();
+      if (total) tr.className = 'total';
+      cells.forEach((value, i) => {
+        const td = tr.insertCell();
+        td.textContent = value;
+        td.className = heads[i][1];
+        td.dataset.label = heads[i][0];
+      });
+    };
+    [...rows].reverse().forEach(r => add([r.label, money(r.service), money(r.commission), `${Math.round(r.rate)}%`, money(r.service - r.commission)]));
+    const paid = rows.reduce((s, r) => s + r.commission, 0);
+    const earned = rows.reduce((s, r) => s + r.service, 0);
+    add(['Total', money(earned), money(paid), `${Math.round(earned ? paid / earned * 100 : 0)}%`, money(earned - paid)], true);
+    scroll.appendChild(table);
+    box.appendChild(scroll);
+  }
+
+  function commissionBars(rows) {
     // Stacked columns: each day's service revenue, with the commission share at the bottom
     const { svg, width } = canvas('chart-commission', 300);
     svg.setAttribute('aria-label', 'Service revenue by day, split into commission paid and money left');
