@@ -94,6 +94,7 @@
     .wrap { position: relative; z-index: 2; max-width: 1160px; margin: -52px auto 0; padding: 0 20px 40px; }
     h2 { margin: 0; font: 600 19px/1.3 var(--serif); color: var(--text); }
     h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--deep); }
+    h3.chart-title { margin-top: 20px; }
     .sub { color: var(--text-2); font-size: 13px; }
     .warning { background: var(--warn-bg); padding: 10px 14px; border-radius: 12px; margin-bottom: 14px; }
 
@@ -603,13 +604,13 @@
       </details>
     </section>
 
-    <section class="card half">
+    <section class="card">
       <h2>{{ r.best_weekday.day }} is the strongest day, {{ r.worst_weekday.day }} the weakest</h2>
       <div class="sub">Average revenue per day (KSh) in this period.</div>
       <div class="chart" id="chart-weekday"></div>
     </section>
 
-    <section class="card half">
+    <section class="card">
       <h2>Top products by revenue</h2>
       <div class="sub">Products sold in this period.</div>
       <table>
@@ -673,10 +674,24 @@
       </div>
     </section>
 
-    <section class="card half">
+    <section class="card">
       {% if r.rates %}
-        <h2>Commission averages {{ r.commission_rate|round|int }}% of service revenue</h2>
-        <div class="sub">Share of each day's service revenue. Paid days range from {{ r.rate_low|round|int }}% to {{ r.rate_high|round|int }}%.</div>
+        {% set paid = r.rates|sum(attribute="commission") %}
+        {% set earned = r.rates|sum(attribute="service") %}
+        {% set per100 = (paid / earned * 100) if earned else 0 %}
+        <h2>Out of every KSh 100 earned from services, KSh {{ per100|round|int }} is paid as commission</h2>
+        {% set by_rate = r.rates|selectattr("commission", "gt", 0)|sort(attribute="rate")|list %}
+        <div class="sub">Across the days with a commission entry.{% if by_rate|length > 1 %} The lowest day was {{ by_rate[0].label }} at {{ by_rate[0].rate|round|int }}%, the highest {{ by_rate[-1].label }} at {{ by_rate[-1].rate|round|int }}%.{% endif %}</div>
+        <div class="split" role="img" aria-label="Commission {{ paid|ksh }} KSh, left from services {{ (earned - paid)|ksh }} KSh">
+          <div style="flex: {{ paid }}; background: var(--s2)"></div>
+          <div style="flex: {{ [earned - paid, 0]|max }}; background: var(--muted)"></div>
+        </div>
+        <div class="legend">
+          <span><i style="background: var(--s2)"></i>Commission: KSh {{ paid|ksh }} ({{ per100|round|int }}%)</span>
+          <span><i style="background: var(--muted)"></i>Left from services: KSh {{ (earned - paid)|ksh }} ({{ (100 - per100)|round|int }}%)</span>
+        </div>
+        <h3 class="chart-title">Day by day</h3>
+        <div class="sub">Each bar is one day's service revenue. The purple part is the commission paid that day. Tap or point at a bar for the figures.</div>
         <div class="chart" id="chart-commission"></div>
       {% else %}
         <h2>Commission</h2>
@@ -684,7 +699,7 @@
       {% endif %}
     </section>
 
-    <section class="card half">
+    <section class="card">
       <h2>Summary for this period</h2>
       <div class="sub">Rent, wages and other running costs are not in the sheet.</div>
       <table>
@@ -699,7 +714,7 @@
       <p class="sub">Product gross profit is KSh {{ r.product_profit|ksh }}, a {{ r.product_margin|round|int }}% margin on items with a recorded cost.</p>
     </section>
 
-    <section class="card half">
+    <section class="card">
       <h2>Most profitable products</h2>
       <div class="sub">Gross profit on products sold in this period.</div>
       <table>
@@ -714,7 +729,7 @@
       </table>
     </section>
 
-    <section class="card half">
+    <section class="card">
       <h2>Thinnest margins in stock</h2>
       <div class="sub">Lines still on the shelf, by list price against unit cost.</div>
       <table>
@@ -855,38 +870,38 @@
   function drawCommission() {
     const rows = DATA.rates;
     if (!rows.length) return;
-    const { svg, width } = canvas('chart-commission', 270);
-    svg.setAttribute('aria-label', 'Commission as a share of service revenue by day');
-    const left = 38, right = width - 62, y0 = 14, base = 240;
-    const maxP = niceMax(Math.max(...rows.map(r => r.rate)), 20);
-    const first = Date.parse(rows[0].date);
-    const span = Math.max(Date.parse(rows[rows.length - 1].date) - first, 1);
-    const x = r => left + 10 + (Date.parse(r.date) - first) / span * (right - left - 20);
-    const y = p => base - p / maxP * (base - y0);
-    for (let t = 0; t <= maxP; t += 20) {
+    // Stacked columns: each day's service revenue, with the commission share at the bottom
+    const { svg, width } = canvas('chart-commission', 300);
+    svg.setAttribute('aria-label', 'Service revenue by day, split into commission paid and money left');
+    const left = 46, right = width - 6, y0 = 30, base = 266;
+    const maxV = niceMax(Math.max(...rows.map(r => r.service)), 1000);
+    const gridStep = maxV > 6000 ? 2000 : 1000;
+    const band = (right - left) / rows.length;
+    const y = v => base - v / maxV * (base - y0);
+    const step = Math.ceil(48 / band);
+    for (let t = 0; t <= maxV; t += gridStep) {
       svg.appendChild(make('line', { x1: left, x2: right, y1: y(t), y2: y(t), stroke: t ? 'var(--line)' : 'var(--axis)' }));
-      svg.appendChild(make('text', { x: left - 6, y: y(t) + 4, 'text-anchor': 'end' }, `${t}%`));
+      svg.appendChild(make('text', { x: left - 8, y: y(t) + 4, 'text-anchor': 'end' }, money(t)));
     }
-    const ay = y(DATA.commission_rate);
-    svg.appendChild(make('line', { x1: left, x2: right + 4, y1: ay, y2: ay, stroke: 'var(--text-2)', 'stroke-dasharray': '4 4' }));
-    svg.appendChild(make('text', { x: right + 8, y: ay - 2 }, 'Average'));
-    svg.appendChild(make('text', { x: right + 8, y: ay + 13 }, `${Math.round(DATA.commission_rate)}%`));
-    const paid = rows.filter(r => r.commission > 0);
-    const high = paid.reduce((a, b) => (b.rate > a.rate ? b : a), paid[0]);
-    const low = paid.reduce((a, b) => (b.rate < a.rate ? b : a), paid[0]);
-    rows.forEach(r => {
-      const mark = r === high || r === low;
-      svg.appendChild(make('circle', { cx: x(r), cy: y(r.rate), r: 5, fill: mark ? 'var(--accent)' : 'var(--muted)', stroke: 'var(--surface)', 'stroke-width': 2 }));
-      const hit = make('circle', { class: 'hit', cx: x(r), cy: y(r.rate), r: 11 });
-      hover(hit, `${r.label}: KSh ${money(r.commission)} on KSh ${money(r.service)} of services (${Math.round(r.rate)}%)`);
-      svg.appendChild(hit);
-      if (mark && high !== low) {
-        const anchor = x(r) > right - 50 ? 'end' : (x(r) < left + 50 ? 'start' : 'middle');
-        svg.appendChild(make('text', { class: 'strong', x: x(r), y: y(r.rate) + (r === high ? -11 : 20), 'text-anchor': anchor }, `${r.label}: ${Math.round(r.rate)}%`));
+    const barW = Math.max(2, Math.min(28, band - 3));
+    rows.forEach((r, i) => {
+      const x = left + i * band + (band - barW) / 2;
+      const cut = Math.min(r.commission, r.service);
+      const top = y(r.service), mid = y(cut);
+      if (r.service > cut) {
+        // Money left from services, with a 2px gap above the commission part
+        svg.appendChild(make('path', { d: column(x, top, barW, cut > 0 ? mid - 2 : base), fill: 'var(--muted)' }));
       }
+      if (cut > 0) {
+        svg.appendChild(make('path', { d: r.service > cut ? `M${x},${mid}H${x + barW}V${base}H${x}Z` : column(x, mid, barW, base), fill: 'var(--s2)' }));
+      }
+      if (i % step === 0) {
+        svg.appendChild(make('text', { x: left + (i + 0.5) * band, y: base + 20, 'text-anchor': 'middle' }, r.label));
+      }
+      const hit = make('rect', { class: 'hit', x: left + i * band, y: y0, width: band, height: base - y0 });
+      hover(hit, `${r.label}: services KSh ${money(r.service)}, commission KSh ${money(r.commission)} (${Math.round(r.rate)}%), left KSh ${money(r.service - r.commission)}`);
+      svg.appendChild(hit);
     });
-    svg.appendChild(make('text', { x: x(rows[0]), y: base + 20, 'text-anchor': 'start' }, rows[0].label));
-    if (rows.length > 1) svg.appendChild(make('text', { x: x(rows[rows.length - 1]), y: base + 20, 'text-anchor': 'end' }, rows[rows.length - 1].label));
   }
 
   function drawServices() {
