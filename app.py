@@ -256,8 +256,19 @@ def parse_commission(rows):
 
 def parse_sheet(raw):
     """Turn the raw tabs into the data every report is built from."""
-    _, sales = parse_grid(raw["SALES"])
+    sales_dates, sales = parse_grid(raw["SALES"])
     all_dates, revenue = parse_grid(raw["REVENUE"])
+
+    # Two columns with the same date are added together, so each date must
+    # appear once here or that day would be counted again for every copy.
+    issues = [
+        f"The {tab} tab has {dates.count(day)} columns dated {label(day)} {day.year}. "
+        "Their figures are added together as one day. Check the dates in that tab."
+        for tab, dates in (("SALES", sales_dates), ("REVENUE", all_dates))
+        for day in sorted({day for day in dates if dates.count(day) > 1})
+    ]
+    all_dates = list(dict.fromkeys(all_dates))
+
     active = [
         day for day in all_dates
         if sum(values.get(day, 0.0) for values in revenue.values()) > 0
@@ -271,6 +282,7 @@ def parse_sheet(raw):
         "commission": parse_commission(raw["COMMISION"]),
         # Blank days after the last sale, such as today, are left out
         "dates": [day for day in all_dates if active[0] <= day <= active[-1]],
+        "issues": issues,
     }
 
 
@@ -864,6 +876,7 @@ def index():
         refresh_url=url_for("index", refresh=1, **keep),
         updated=updated,
         warning=warning,
+        issues=data.get("issues", []),
         can_sign_out=login_required(),
     )
 

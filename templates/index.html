@@ -450,6 +450,7 @@
 <div class="wrap">
 
   {% if warning %}<div class="warning">{{ warning }}</div>{% endif %}
+  {% for issue in issues %}<div class="warning" role="status">{{ issue }}</div>{% endfor %}
 
   <nav class="filter" aria-label="Date filter">
     <div class="segments">
